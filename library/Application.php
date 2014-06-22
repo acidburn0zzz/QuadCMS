@@ -62,11 +62,11 @@ class Application extends PhalconPHP {
     protected $_rootPath   = '.';
     
     //  Relative path to the Data directory 
-    //  Relative path to the JS directory
     public static $dataPath = 'data';
-    public static $jsPath   = 'js';
     
     
+    
+    //  Start the application. Sets up the environment.
     public function startApp($configPath = '.', $rootPath = '.', $loadData = true) {
         if($this->_initialized) {
             return;
@@ -116,6 +116,7 @@ class Application extends PhalconPHP {
     
         $this->_configPath = $configPath;
 		$this->_rootPath   = $rootPath;
+        $this->addLazyLoader('requestPaths', array($this), 'loadRequestPaths')
         
         if ($loadData) {
 			$this->loadData();
@@ -125,4 +126,32 @@ class Application extends PhalconPHP {
         $this->_initialized = true;
     }
     
+    
+    
+    
+    //  Helper function for initialization
+    public static function initialize() {
+        self::className(__CLASS__);
+        self::changeInitConfig($initChanges);
+		self::getInstance()->startApp($$this_configPath, $this->_rootPath, $this->_loadData);
+    }
+    
+    
+    
+    //  Loads the default data for the application
+    public function loadData() {
+        $config = $this->loadConfig();
+        self::set('config', $config);
+		self::setDebugMode($config->debug);
+		self::$DataPath = (string)$config->DataPath;
+    }
+    
+    
+    
+    //  Merges changes into the configuration
+    public static function mergeChanges(array $changes) {
+        if($changes) {
+            self::$_initConfig = array_merge(self::_initConfig, $changes);
+        }
+    }
 }
