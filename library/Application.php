@@ -7,8 +7,7 @@
 **/
 
 /**
- *   Base QuadCMS Core Application Class
- *   
+ *   Base QuadCMS Core Application Class  
  *   Sets up the environment as necessary and acts as the registry
  *   for QuadCMS and the Core Application.
 **/
@@ -66,5 +65,64 @@ class Application extends PhalconPHP {
     //  Relative path to the JS directory
     public static $dataPath = 'data';
     public static $jsPath   = 'js';
+    
+    
+    public function startApp($configPath = '.', $rootPath = '.', $loadData = true) {
+        if($this->_initialized) {
+            return;
+        }
+        
+        if (self::$_initConfig['undoMagicQuotes'] && function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
+			self::undoMagicQuotes($_GET);
+			self::undoMagicQuotes($_POST);
+			self::undoMagicQuotes($_COOKIE);
+			self::undoMagicQuotes($_REQUEST);
+		}
+        
+        if (function_exists('get_magic_quotes_runtime') && get_magic_quotes_runtime()) {
+			@set_magic_quotes_runtime(false);
+		}
+
+		if (self::$_initConfig['setMemoryLimit']) {
+			self::setMemoryLimit(64 * 1024 * 1024);
+		}
+        
+        if (self::$_initConfig['resetOutputBuffering']) {
+			@ini_set('output_buffering', false);
+			@ini_set('zlib.output_compression', 0);
+
+			if (!@ini_get('output_handler')) {
+				$level = ob_get_level();
+				while ($level) {
+					@ob_end_clean();
+					$newLevel = ob_get_level();
+					if ($newLevel >= $level) {
+						break;
+					}
+					$level = $newLevel;
+				}
+			}
+		}
+        
+        error_reporting(E_ALL | E_STRICT & ~8192);
+		set_error_handler(array('Application', 'handlePhpError'));
+		set_exception_handler(array('Application', 'handleException'));
+		register_shutdown_function(array('Application', 'handleFatalError'));
+
+		date_default_timezone_set('UTC');
+		self::$time = time();
+		self::$hostname = (empty($_SERVER['HTTP_HOST']) ? '' : $_SERVER['HTTP_HOST']);
+		self::$secure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on');
+    
+        $this->_configPath = $configPath;
+		$this->_rootPath   = $rootPath;
+        
+        if ($loadData) {
+			$this->loadData();
+		}
+        
+        //  Becomes initialized
+        $this->_initialized = true;
+    }
     
 }
