@@ -28,8 +28,11 @@ class Application extends PhalconPHP {
     //  Unused currently
     protected $_lazyLoaders = $array();
     
-    //  Cache of random data (Binary characters)
-    protected static $_randomData = '';
+    /**
+     *    Moved to Authentication.php
+     *   //  Cache of random data (Binary characters)
+	 *   protected static $_randomData = '';
+    **/
     
     //  Cache of dynamic classes and what they resolve to
     protected static $_classCache = array();
